@@ -11,7 +11,7 @@ contract Exchange {
     mapping(uint256 => _Order) public orders;
     uint256 public orderCount;
     mapping(uint256 => bool) public orderCancelled;
-
+    mapping(uint256 => bool) public orderFilled;
 
     event Deposit(address token, address user, uint256 amount, uint256 balance);
 
@@ -34,6 +34,17 @@ contract Exchange {
         uint256 amountGet,
         address tokenGive,
         uint256 amountGive,
+        uint256 timestamp
+    );
+
+        event Trade(
+        uint256 id,
+        address user,
+        address tokenGet,
+        uint256 amountGet,
+        address tokenGive,
+        uint256 amountGive,
+        address creator,
         uint256 timestamp
     );
 
@@ -85,54 +96,112 @@ contract Exchange {
         return tokens[_token][_user];
     }
 
-//Make and cancel orders
-function makeOrder(address _tokenGet, uint256 _amountGet, address _tokenGive, uint256 _amountGive) public{
+    //Make and cancel orders
+    function makeOrder(address _tokenGet, uint256 _amountGet, address _tokenGive, uint256 _amountGive) public{
 
-require(balanceOf(_tokenGive, msg.sender) >= _amountGive, 'insufficient balance');
+        require(balanceOf(_tokenGive, msg.sender) >= _amountGive, 'insufficient balance');
 
-    orderCount = orderCount + 1;
+        orderCount++;
 
-    orders[orderCount] = _Order(
-    orderCount, //id
-    msg.sender, //user
-    _tokenGet,
-    _amountGet,
-    _tokenGive,
-    _amountGive,
-    block.timestamp
-    );
-
-    emit Order(
-        orderCount,
-        msg.sender,
+        orders[orderCount] = _Order(
+        orderCount, //id
+        msg.sender, //user
         _tokenGet,
         _amountGet,
         _tokenGive,
         _amountGive,
         block.timestamp
-    );
-}
+        );
 
-//Cancel orders
-    function cancelOrder(uint256 _id) public{
-    //fetch order
-    _Order storage _order = orders[_id];
-    //order must exist
-    require (_order.id == _id);
-    //ensure caller of the fuction is the owner of the order
-    require(address(_order.user) == msg.sender);
-    //cancel order
-    orderCancelled[_id] = true;
-
-
-    emit Cancel(
-    _order.id,
-    msg.sender,
-    _order.tokenGet,
-    _order.amountGet,
-    _order.tokenGive,
-    _order.amountGive,
-    block.timestamp
-    );
+        emit Order(
+            orderCount,
+            msg.sender,
+            _tokenGet,
+            _amountGet,
+            _tokenGive,
+            _amountGive,
+            block.timestamp
+        );
     }
+
+    //Cancel orders
+    function cancelOrder(uint256 _id) public{
+        //fetch order
+        _Order storage _order = orders[_id];
+        //order must exist
+        require (_order.id == _id);
+        //ensure caller of the fuction is the owner of the order
+        require(address(_order.user) == msg.sender);
+        //cancel order
+        orderCancelled[_id] = true;
+
+
+        emit Cancel(
+            _order.id,
+            msg.sender,
+            _order.tokenGet,
+            _order.amountGet,
+            _order.tokenGive,
+            _order.amountGive,
+            block.timestamp
+            );
+    }
+
+    //Execute orders
+    function fillOrder(uint256 _id) public{
+        //must be valid order
+        require(_id > 0 && _id <= orderCount, "does not exist");
+        //order can't be filled
+        require (!orderFilled[_id]);
+        //order can't be canceled
+        require (!orderCancelled[_id]);
+
+
+        //fetch order
+        _Order storage _order = orders[_id];
+        //execute the trade
+        _trade(_order.id, 
+        _order.user,    
+        _order.tokenGet,
+        _order.amountGet,
+        _order.tokenGive,
+        _order.amountGive);
+
+        //mark order as filled
+        orderFilled[_order.id] = true;
+
+    }
+
+    function _trade(
+        uint256 _orderId, 
+        address _user, 
+        address _tokenGet,
+        uint256 _amountGet,
+        address _tokenGive,
+        uint256 _amountGive
+     ) internal {
+            //calculate fee
+            uint256 _feeAmount = (_amountGet * feePercent) /100;
+            //execute trade
+            tokens[_tokenGet][msg.sender] = tokens[_tokenGet][msg.sender] - (_amountGet + _feeAmount);
+            tokens[_tokenGet][_user] = tokens[_tokenGet][_user] + _amountGet;
+
+            tokens[_tokenGive][msg.sender] = tokens[_tokenGive][msg.sender] + _amountGive;
+            tokens[_tokenGive][_user] = tokens[_tokenGive][_user] - _amountGive;
+
+            //charge fee
+            tokens[_tokenGet][feeAccount] = tokens[_tokenGet][feeAccount] + _feeAmount;
+
+    emit Trade(
+        _orderId,
+        msg.sender,
+        _tokenGet,
+        _amountGet,
+        _tokenGive,
+        _amountGive,
+        _user,
+        block.timestamp
+        );
+    }
+
 }
