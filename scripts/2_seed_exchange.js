@@ -1,5 +1,7 @@
 const config = require('../src/config.json')
 
+
+
 const tokens = (n) => {
   return ethers.utils.parseUnits(n.toString(), 'ether')
 }
@@ -75,14 +77,12 @@ async function main() {
   transaction = await exchange.connect(user1).makeOrder(mETH.address, tokens(100), DAPP.address, tokens(5))
   result = await transaction.wait()
   console.log(`Made order from ${user1.address}`)
-      // Wait 1 second
-      await wait(1)
 
   // User 1 cancels order
-  orderId = result.events[0].args.id
-  transaction = await exchange.connect(user1).cancelOrder(orderId)
-  result = await transaction.wait()
-  console.log(`Cancelled order from ${user1.address}\n`)
+  // orderId = result.events[0].args.id
+  // transaction = await exchange.connect(user1).cancelOrder(orderId)
+  // result = await transaction.wait()
+  // console.log(`Cancelled order from ${user1.address}\n`)
 
   // Wait 1 second
   await wait(1)
