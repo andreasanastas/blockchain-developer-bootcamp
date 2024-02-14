@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import  { useDispatch } from 'react-redux'
 import config from '../config.json'
 import { loadProvider, loadNetwork, loadAccount, loadTokens, loadExchange } from '../store/interactions';
-import Navbar from './Navbar';
+import Navbar from './Navbar'
 
 function App() {
 
