@@ -35,3 +35,4 @@ const marketHandler = async(e) =>{
   }
   
   export default Markets;
+  
