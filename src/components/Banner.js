@@ -7,3 +7,4 @@ const Banner = ({ text }) => {
   }
   
   export default Banner;
+  

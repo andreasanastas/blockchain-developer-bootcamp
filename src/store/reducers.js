@@ -24,6 +24,8 @@ export const provider = (state = {}, action) => {
             return state
     }
 }
+//---------------------------------------------------------------------------------------------------------------
+// LOAD ALL TOKENS
 
 const DEFAULT_TOKENS_STATE = { 
     loaded: false,
@@ -77,6 +79,9 @@ const DEFAULT_EXCHANGE_STATE = {
     events: []
   }
 
+//---------------------------------------------------------------------------------------------------------------
+// LOAD ALL ORDERS
+
 export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => { 
     let index, data
     switch (action.type) {
@@ -113,6 +118,51 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
           data: action.allOrders
         }
       }
+//---------------------------------------------------------------------------------------------------------------
+// CANCELLING ORDERS
+
+    case 'ORDER_CANCEL_REQUEST':
+        return{
+            ...state,
+            transaction:{
+                transactionType: 'Cancel',
+                isPending: true,
+                isSuccessful: false
+            }
+        }
+
+        case 'ORDER_CANCEL_SUCCESS':
+        
+            return {
+                ...state,
+                transaction: {
+                transactionType: 'Cancel',
+                isPending: false,
+                isSuccessful: true
+                },
+                cancelledOrders : {
+                    ...state.cancelledOrders,
+                    data: [
+                        ...state.cancelledOrders.data,
+                        action.order
+                    ]
+                },
+                events: [action.event, ...state.events]
+            }
+
+        case 'ORDER_CANCEL_FAIL':
+            return{
+                ...state,
+                transaction:{
+                    transactionType: 'Cancel',
+                    isPending: false,
+                    isSuccessful: false,
+                    isError: true
+                }
+
+            }
+//---------------------------------------------------------------------------------------------------------------
+// BALANCE CASES
 
         case 'EXCHANGE_TOKEN_1_BALANCE_LOADED':
             return{
@@ -125,6 +175,8 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
                 ...state,
                 balances: [...state.balances, action.balance]
             }
+//---------------------------------------------------------------------------------------------------------------
+// TRANSFER CASES
 
             case 'TRANSFER_REQUEST':
                 return{
@@ -161,6 +213,9 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
                 transferInProgress: false
                 }
 
+//---------------------------------------------------------------------------------------------------------------
+// NEW ORDERS
+
             case 'NEW_ORDER_REQUEST':
                 return{
                     ...state,
@@ -171,7 +226,6 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
                     },
 
                 }
-
 
             case 'NEW_ORDER_SUCCESS':
                 // Prevent duplicate orders
