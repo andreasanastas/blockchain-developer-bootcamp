@@ -1,7 +1,6 @@
 import { ethers } from "ethers";
 import TOKEN_ABI from '../abis/Token.json'
 import EXCHANGE_ABI from '../abis/Exchange.json'
-import { entropyToMnemonic } from "ethers/lib/utils";
 
 export const loadProvider = (dispatch) => {
     const connection = new ethers.providers.Web3Provider(window.ethereum)

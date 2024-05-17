@@ -77,7 +77,7 @@ const Balance = () => {
         if(exchange && tokens[0] && tokens[1] && account){
         loadBalances(exchange, tokens, account, dispatch)
     }
-    }, [exchange, tokens, account, transferInProgress])
+    }, [exchange, tokens, account, transferInProgress, dispatch])
 
     return (
       <div className='component exchange__transfers'>
@@ -104,7 +104,7 @@ const Balance = () => {
                  : 
                 (e) => withdrawHandler(e, tokens[0])
                 }>
-            <label htmlFor="token0">{symbols && symbols[0]}</label>
+            <label htmlFor="token0">{symbols && symbols[0]} Amount</label>
             <input 
             type="text" 
             id='token0' 
@@ -134,12 +134,12 @@ const Balance = () => {
   
           </div>
   
-          <form onSubmit={isDeposit==true ? 
+          <form onSubmit={isDeposit===true ? 
                 (e) => depositHandler(e, tokens[1])
                  : 
                 (e) => withdrawHandler(e, tokens[1])
                 }>
-            <label htmlFor="token1"></label>
+            <label htmlFor="token1">{symbols && symbols[1]} Amount</label>
             <input 
             type="text" 
             id='token1' 

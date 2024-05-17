@@ -8,6 +8,7 @@ const RED = '#F45353'
 
 const account = state => get(state, 'provider.account')
 const tokens = state => get(state, 'tokens.contracts')
+const events = state => get(state, 'exchange.events')
 
 const allOrders = state => get(state, 'exchange.allOrders.data', [])
 const cancelledOrders = state => get(state, 'exchange.cancelledOrders.data', [])
@@ -27,6 +28,18 @@ const openOrders = state => {
   return openOrders
 
 }
+
+// MY EVENTS
+// ------------------------------------------------------------------------------------------------------------------------
+
+export const myEventsSelector = createSelector(
+    account,
+    events,
+    (account, events) => {
+        events = events.filter((e) => e.args.user === account)
+        return events
+    }
+)
 
 // MY OPEN ORDERS
 // ------------------------------------------------------------------------------------------------------------------------
@@ -272,38 +285,41 @@ const decorateOrderBookOrder = (order, tokens) => {
 // ------------------------------------------------------------------------------------------------------------------------
 
 export const priceChartSelector = createSelector(
-    filledOrders, 
-    tokens, 
+    filledOrders,
+    tokens,
     (orders, tokens) => {
-        //check for tokens
-        if (!tokens[0] || !tokens[1]) { return }
-
-        //filter tokens by market
-        orders = orders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-        orders = orders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
-
-        // sort orders by date ascending to comapre history
-        orders = orders.sort((a, b) => a.timestamp - b.timestamp)
-
-        //decorate orders - add display attributes
-        orders = orders.map((o) => decorateOrder(o, tokens))
-
-        let secondLastOrder, lastOrder
-        [secondLastOrder, lastOrder] = orders.slice(orders.length - 2, orders.length -1)
-
-        const lastPrice = get(lastOrder, 'tokenPrice', 0)
-
-        const secondLastPrice = get(secondLastOrder, 'tokenPrice', 0)
-
-        return({
-            lastPrice: lastPrice, 
-            lastPriceChange: (lastPrice >= secondLastPrice ? '+' : '-'),
-            series: [{
-                data: buildGraphData(orders)
-            }]
-        })
-        
-    })
+      if (!tokens[0] || !tokens[1]) { return }
+  
+      // Filter orders by selected tokens
+      orders = orders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
+      orders = orders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+  
+      // Sort orders by date ascending to compare history
+      orders = orders.sort((a, b) => a.timestamp - b.timestamp)
+  
+      // Decorate orders - add display attributes
+      orders = orders.map((o) => decorateOrder(o, tokens))
+  
+      // Get last 2 order for final price & price change
+      let secondLastOrder, lastOrder
+      [secondLastOrder, lastOrder] = orders.slice(orders.length - 2, orders.length)
+  
+      // get last order price
+      const lastPrice = get(lastOrder, 'tokenPrice', 0)
+  
+      // get second last order price
+      const secondLastPrice = get(secondLastOrder, 'tokenPrice', 0)
+  
+      return ({
+        lastPrice,
+        lastPriceChange: (lastPrice >= secondLastPrice ? '+' : '-'),
+        series: [{
+          data: buildGraphData(orders)
+        }]
+      })
+  
+    }
+  )
 
     const buildGraphData = (orders) => {
         //grou the orders by the hour
